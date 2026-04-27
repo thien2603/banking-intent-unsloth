@@ -2,35 +2,31 @@
 
 ## 📌 Overview
 
-This project fine-tunes a modern BERT-style model using QLoRA for intent classification on the BANKING77 dataset. The goal is to achieve strong performance with limited computational resources.
+This project fine-tunes a model using Unsloth (QLoRA) for intent classification on a subset of the BANKING77 dataset. The work follows the requirements of Project 2 – NLP in Industry.
 
 ---
 
 ## 📊 Data Preparation
 
-The **BANKING77 dataset** consists of 13,083 customer service queries labeled into 77 intent classes (e.g., `card_arrival`, `exchange_rate`, `lost_card`).
+**Dataset:** BANKING77 (original: 13,083 queries, 77 intent classes)
 
-To optimize training efficiency, a representative subset was sampled.
+A subset is sampled to fit available computational resources.
 
-### 🔧 Preprocessing Steps (`scripts/preprocess_data.py`)
+### 🔧 Preprocessing steps (`scripts/preprocess_data.py`)
 
-* **Load dataset** – Using Hugging Face `datasets` library.
-* **Sampling**
-
-  * 5,000 training samples
-  * 500 validation samples
-  * 1,000 test samples
-* **Text normalization** – Lowercasing and basic punctuation normalization.
-* **Label mapping** – Preserved original indices (0–76).
-* **Train/validation/test split** – 70 / 10 / 20 ratio.
-* **Save processed data** – Stored as CSV files:
+* Load dataset from Hugging Face
+* Sample a subset (e.g., 5,000 train / 1,000 test)
+* Basic text cleaning and normalization
+* Map intent labels to IDs
+* Split into train / test (and optionally validation)
+* Save processed data to:
 
   * `sample_data/train.csv`
   * `sample_data/test.csv`
 
 ### ▶️ Run preprocessing
 
-```bash
+```bash id="p1x8ad"
 python scripts/preprocess_data.py
 ```
 
@@ -38,120 +34,92 @@ python scripts/preprocess_data.py
 
 ## 🤖 Model Fine-tuning with Unsloth
 
-### 📌 Model Selection
-
-* **Base model:** `answerdotai/ModernBERT-base` – A modern encoder optimized for classification tasks.
+* **Base model:** Any encoder supported by Unsloth
+  (e.g., `unsloth/Llama-3.2-1B`, `answerdotai/ModernBERT-base`)
+* **Method:** QLoRA (4-bit quantization + LoRA adapters)
 
 ---
 
 ### ⚙️ Hyperparameters (`configs/train.yaml`)
 
-| Hyperparameter        | Value                                     | Explanation                      |
-| --------------------- | ----------------------------------------- | -------------------------------- |
-| Base model            | answerdotai/ModernBERT-base               | Classification-optimized encoder |
-| LoRA rank (r)         | 16                                        | Adapter capacity                 |
-| LoRA alpha            | 16                                        | Scaling factor                   |
-| LoRA dropout          | 0.0                                       | Disabled for faster training     |
-| Target modules        | ["query", "key", "value", "output.dense"] | Attention layers                 |
-| Batch size            | 16                                        | Per-device                       |
-| Gradient accumulation | 2                                         | Effective batch size = 32        |
-| Learning rate         | 2e-4                                      | Standard for QLoRA               |
-| Optimizer             | adamw_8bit                                | Memory-efficient                 |
-| Epochs                | 3                                         | Sufficient for dataset size      |
-| Max sequence length   | 256                                       | Covers ~99% of queries           |
-| Precision             | 4-bit QLoRA                               | Reduced VRAM usage               |
-| Warmup steps          | 10                                        | Stabilizes early training        |
-| Logging steps         | 1                                         | Detailed logging                 |
+| Parameter             | Typical value |
+| --------------------- | ------------- |
+| LoRA rank (r)         | 16            |
+| LoRA alpha            | 16            |
+| LoRA dropout          | 0.0           |
+| Batch size            | 8 – 16        |
+| Gradient accumulation | 1 – 2         |
+| Learning rate         | 2e-4          |
+| Optimizer             | adamw_8bit    |
+| Epochs                | 3             |
+| Max sequence length   | 256           |
+| Warmup steps          | 10            |
+
+*(Adjust according to your actual training configuration.)*
 
 ---
 
 ### ▶️ Run training
 
-```bash
+```bash id="8n6lqk"
 python scripts/train.py
 ```
 
----
-
-### 🧠 Training Pipeline
-
-* Load preprocessed data
-* Configure model with QLoRA via Unsloth
-* Train and validate model
-* Save best checkpoint to `outputs/`
-* Select best model based on validation accuracy
+Training saves the best checkpoint to `outputs/`.
 
 ---
 
 ## 🎯 Inference
 
-The inference interface is implemented in `scripts/inference.py`.
+The inference class is implemented in `scripts/inference.py` and follows the required interface:
 
-### 🧩 Class Interface
-
-* `__init__(self, model_path)` – Loads config, tokenizer, and model.
-* `call(self, message)` – Returns predicted intent label.
+* `__init__(self, model_path)` – loads config, tokenizer, and model checkpoint
+* `call(self, message)` – returns predicted intent label as string
 
 ---
 
-### 💡 Example Usage
+### 💡 Example usage
 
-```python
+```python id="k2q4zx"
 from scripts.inference import IntentClassification
 
 classifier = IntentClassification("configs/inference.yaml")
-
-message = "I am still waiting on my card?"
-predicted_label = classifier.call(message)
-
-print(f"Message: {message}\nPredicted intent: {predicted_label}")
-```
-
----
-
-### 🧾 Sample Output
-
-```
-Message: I am still waiting on my card?
-Predicted intent: card_arrival
+pred = classifier.call("I am still waiting on my card?")
+print(pred)  # e.g., 'card_arrival'
 ```
 
 ---
 
 ### ▶️ Run inference
 
-```bash
+```bash id="r5d9wj"
 python scripts/inference.py
 ```
 
 ---
 
-## 📈 Results
+## 📈 Results (to be filled after actual training)
 
-| Metric        | Value                     |
-| ------------- | ------------------------- |
-| Test Accuracy | **85.6%** (1,000 samples) |
-| Training Time | ~15 minutes (T4 GPU)      |
-| VRAM Usage    | ~5 GB (4-bit QLoRA)       |
+Test accuracy, training time, and VRAM usage will be updated after running the code.
 
 ---
 
 ## 🎥 Video Demonstration
 
-👉 Google Drive Link:
+📁 Google Drive folder:
 https://drive.google.com/drive/folders/11OM-9Bb6sRR80MKCYbdPfHRsVbJHhQrg?usp=drive_link
 
-### The video includes:
+### The video demonstrates:
 
-* Running inference script
-* Multiple prediction examples
-* Final test accuracy demonstration
+* Running the inference script
+* Example input messages and predicted intents
+* Final test accuracy (displayed during evaluation)
 
 ---
 
 ## 📁 Repository Structure
 
-```
+```id="z7h3nb"
 banking-intent-unsloth/
 ├── scripts/
 │   ├── train.py
@@ -163,7 +131,7 @@ banking-intent-unsloth/
 ├── sample_data/
 │   ├── train.csv
 │   └── test.csv
-├── outputs/
+├── outputs/               (saved model checkpoints)
 ├── train.sh
 ├── inference.sh
 ├── requirements.txt
@@ -174,9 +142,8 @@ banking-intent-unsloth/
 
 ## 📚 References
 
-* BANKING77 Dataset – PolyAI
+* BANKING77 Dataset
 * Unsloth Documentation
-* LoRA / QLoRA Best Practices
 
 ---
 
