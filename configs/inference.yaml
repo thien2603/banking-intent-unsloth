@@ -1,1 +1,3 @@
-# Inference configuration for banking intent classification
+model_checkpoint: "outputs/final_model"
+max_seq_length: 512
+load_in_4bit: true

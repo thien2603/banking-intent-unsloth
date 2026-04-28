@@ -1,1 +1,8 @@
-# Requirements for banking intent classification
+torch>=2.0.0
+transformers>=4.44.0
+accelerate>=0.33.0
+peft>=0.11.0
+pandas>=2.2.0
+scikit-learn>=1.5.0
+pyyaml>=6.0.2
+safetensors>=0.4.5

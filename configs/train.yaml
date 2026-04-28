@@ -1,1 +1,23 @@
-# Training configuration for banking intent classification
+# configs/train.yaml
+model_name: "unsloth/Llama-3.2-1B-bnb-4bit"
+max_seq_length: 512
+load_in_4bit: true
+
+lora_r: 16
+lora_alpha: 16
+lora_dropout: 0.0
+lora_target_modules: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+
+batch_size: 4
+gradient_accumulation_steps: 2
+learning_rate: 2.0e-4
+max_steps: 600
+warmup_steps: 10
+logging_steps: 10
+save_steps: 100
+eval_steps: 50
+optim: "adamw_8bit"
+weight_decay: 0.01
+lr_scheduler_type: "cosine"
+seed: 3407
+output_dir: "outputs"
